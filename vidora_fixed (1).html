@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vidora</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#0f0f0f;color:#fff;transition:.2s}
+body.light{background:#fff;color:#111}.topbar{height:64px;display:flex;align-items:center;gap:18px;padding:0 20px;position:sticky;top:0;z-index:10;background:#0f0f0f}
+.light .topbar{background:#fff;border-bottom:1px solid #ddd}.menu{border:0;background:none;color:inherit;font-size:24px;cursor:pointer}
+.logo{font-size:22px;font-weight:bold;white-space:nowrap}.logo b{color:#ff0033}.search{display:flex;max-width:620px;flex:1;margin:auto}
+.search input{height:40px;flex:1;border:1px solid #333;border-radius:22px 0 0 22px;background:#181818;color:#fff;padding:0 18px;outline:none}
+.light .search input{background:#f2f2f2;color:#111;border-color:#ddd}.search button{width:60px;border:0;border-radius:0 22px 22px 0;background:#272727;color:#fff;font-size:20px;cursor:pointer}
+.create{background:#272727;color:#fff;border:0;border-radius:22px;padding:11px 17px;font-weight:bold;cursor:pointer}.light .create{background:#eee;color:#111}
+.sidebar{position:fixed;top:64px;left:0;width:78px;bottom:0;padding:14px 7px}.sideitem{padding:12px 3px;margin-bottom:4px;text-align:center;border-radius:12px;font-size:11px;cursor:pointer}.sideitem:hover{background:#272727}.light .sideitem:hover{background:#eee}
+.sideitem{border:0;background:transparent;color:inherit;width:100%;font-family:inherit;cursor:pointer}
+.sideitem.activeSide{background:#272727}.light .sideitem.activeSide{background:#eee}
+#specialPage h1{font-size:28px;margin:10px 0}
+.content{margin-left:78px;padding:18px 28px}.categories{display:flex;gap:10px;overflow:auto;padding-bottom:18px}.categories button{border:0;background:#272727;color:#fff;border-radius:9px;padding:9px 15px;white-space:nowrap;cursor:pointer}.categories .active{background:#fff;color:#111}
+.light .categories button{background:#eee;color:#111}.light .categories .active{background:#111;color:#fff}
+.videos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:28px 18px}.thumb{height:205px;border-radius:12px;overflow:hidden;background:#222;position:relative}
+.thumb svg{width:100%;height:100%;display:block}.duration{position:absolute;right:8px;bottom:8px;background:#000c;padding:4px 6px;border-radius:4px;font-size:12px}
+.info{display:flex;gap:10px;padding-top:10px;align-items:flex-start}.avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#ff0033,#ffb000);flex:none}
+.details{flex:1;min-width:0}.title{font-weight:bold;line-height:1.3;margin-bottom:5px}.meta{color:#aaa;font-size:13px}
+.actions{display:flex;gap:7px;margin-top:9px}.like,.comment{border:0;border-radius:18px;padding:7px 11px;cursor:pointer;background:#272727;color:#fff}.like.active{background:#fff;color:#111}
+.light .like,.light .comment{background:#eee;color:#111}.light .like.active{background:#111;color:#fff}
+.subscribe{border:0;background:#ff0033;color:#fff;border-radius:18px;padding:8px 12px;font-weight:bold;cursor:pointer;white-space:nowrap}.subscribe.subscribed{background:#777}
+.shorts-title{margin:40px 0 16px}.shorts{display:grid;grid-template-columns:repeat(5,1fr);gap:15px}.short{aspect-ratio:9/14;border-radius:10px;overflow:hidden}
+.short svg{width:100%;height:100%;display:block}.settings{position:fixed;right:20px;top:74px;width:290px;background:#1b1b1b;border:1px solid #333;border-radius:14px;padding:18px;display:none;z-index:20;box-shadow:0 10px 40px #0008}
+.light .settings{background:#fff;border-color:#ddd}.settings.open{display:block}.theme-row{display:flex;gap:10px}.theme-row button{flex:1;padding:11px;border:0;border-radius:9px;background:#333;color:#fff;cursor:pointer}.light .theme-row button{background:#eee;color:#111}
+.toast{position:fixed;bottom:25px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:12px 18px;border-radius:9px;display:none;z-index:50}
+@media(max-width:1200px){.videos{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:1000px){.videos{grid-template-columns:repeat(2,1fr)}.shorts{grid-template-columns:repeat(4,1fr)}}@media(max-width:700px){.sidebar{display:none}.content{margin-left:0;padding:12px}.videos{grid-template-columns:1fr}.shorts{grid-template-columns:repeat(2,1fr)}.create{display:none}}
+</style>
+</head>
+<body>
+<header class="topbar">
+<button class="menu" aria-label="Меню">☰</button>
+<div class="logo"><b>▶</b> Vidora</div>
+<div class="search"><input id="search" placeholder="Поиск"><button id="searchBtn">⌕</button></div>
+<button class="create">＋ Создать</button>
+<button class="menu" id="settingsBtn" aria-label="Настройки">⚙</button>
+</header>
+
+<aside class="sidebar">
+<button class="sideitem activeSide" data-page="home">🏠<br>Главная</button>
+<button class="sideitem" data-page="shortsPage">⚡<br>Shorts</button>
+<button class="sideitem" data-page="subscriptions">📺<br>Подписки</button>
+<button class="sideitem" data-page="profile">👤<br>Вы</button>
+<button class="sideitem" data-page="history">🕘<br>История</button>
+</aside>
+
+<main class="content">
+<section id="specialPage" style="display:none">
+  <h1 id="pageTitle"></h1>
+  <p id="pageText" style="color:#aaa"></p>
+  <div id="pageCards" class="videos"></div>
+</section>
+<div id="homePage">
+<div class="categories">
+<button class="active">Все</button><button>Видеоигры</button><button>Сейчас в эфире</button><button>Музыка</button><button>Джемы</button><button>Minecraft</button><button>Roblox</button><button>Спорт</button><button>Футбол</button>
+</div>
+<section class="videos" id="videos"></section>
+<h2 class="shorts-title">⚡ Shorts</h2>
+<section class="shorts" id="shorts"></section>
+</div>
+</main>
+
+<div class="settings" id="settings">
+<h3>⚙ Настройки</h3><p>Тема сайта</p>
+<div class="theme-row"><button id="darkBtn">🌙 Чёрная</button><button id="lightBtn">☀️ Светлая</button></div>
+<p style="color:#888;font-size:13px">Настройка сохраняется автоматически.</p>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const data=[
+["Roblox — Как получить редкий предмет","Gaming Rizo","1,2 млн просмотров","12:45",101],
+["Мой лучший гол в FIFA","Football Edit","845 тыс. просмотров","08:21",102],
+["Minecraft — Новое выживание","Block Master","320 тыс. просмотров","15:09",103],
+["ТОП 10 голов недели","Football Zone","2,1 млн просмотров","10:34",104],
+["Невероятный момент в Roblox","Rizo Games","540 тыс. просмотров","06:18",105],
+["Новая карта Minecraft","Craft World","210 тыс. просмотров","13:52",106],
+["Я ПРОШЁЛ САМУЮ СЛОЖНУЮ КАРТУ ROBLOX","Rizo Games","980 тыс. просмотров","18:27",107],
+["Лучшие финты Килиана Мбаппе","Football Edit","1,8 млн просмотров","09:42",108],
+["Minecraft: 100 дней выживания","Block Master","670 тыс. просмотров","24:15",109],
+["Самые смешные моменты в Roblox","Funny Gaming","430 тыс. просмотров","11:36",110],
+["FIFA — невероятный камбэк","Football Zone","1,1 млн просмотров","07:55",111],
+["Как построить современный дом","Craft World","285 тыс. просмотров","14:08",112],
+["Roblox — НОВЫЙ секретный режим","Gaming Rizo","760 тыс. просмотров","10:21",113],
+["Топ голов Реала за сезон","Madrid Football","2,7 млн просмотров","13:33",114],
+["Minecraft, но мобов стало в 100 раз больше","Block Master","910 тыс. просмотров","16:44",115],
+["Я нашёл секретную комнату!","Rizo Games","350 тыс. просмотров","08:49",116],
+["Лучшие сейвы вратарей","Football Zone","1,5 млн просмотров","12:02",117],
+["Roblox — испытание без прыжков","Gaming Rizo","220 тыс. просмотров","09:18",118],
+["Строим огромный футбольный стадион","Craft World","490 тыс. просмотров","20:31",119],
+["Футбол: 10 невероятных моментов","Football Edit","3,2 млн просмотров","11:25",120],
+["Minecraft — я встретил редкого моба","Block Master","580 тыс. просмотров","07:47",121],
+["Roblox — самый быстрый способ заработать","Rizo Games","1 млн просмотров","13:16",122],
+["Мой лучший матч в FIFA","Football Edit","735 тыс. просмотров","18:03",123],
+["ТОП 20 красивых голов","Madrid Football","1,9 млн просмотров","15:40",124],
+["Minecraft — секреты новой версии","Craft World","405 тыс. просмотров","10:12",125],
+["Roblox — выживание на острове","Gaming Rizo","630 тыс. просмотров","21:05",126],
+["Самые смешные фейлы в футболе","Funny Gaming","890 тыс. просмотров","08:38",127],
+["FIFA — забил гол с центра поля","Football Zone","1,3 млн просмотров","06:51",128],
+["Minecraft — огромный замок за 1 час","Block Master","340 тыс. просмотров","17:22",129],
+["Roblox — 5 секретных предметов","Rizo Games","515 тыс. просмотров","12:11",130]
+];
+
+function art(id,label){
+ const colors=["#184b9b","#c46a17","#16804b","#8d1735","#6b35a8","#087f8f"];
+ const c=colors[id%colors.length];
+ return `<svg viewBox="0 0 700 400" xmlns="http://www.w3.org/2000/svg">
+ <rect width="700" height="400" fill="${c}"/><circle cx="${560-(id%3)*70}" cy="100" r="105" fill="#ffffff22"/>
+ <circle cx="120" cy="330" r="150" fill="#00000022"/><text x="40" y="190" fill="white" font-size="38" font-family="Arial" font-weight="700">${label}</text>
+ <text x="40" y="240" fill="#ffffffcc" font-size="22" font-family="Arial">VIDORA</text></svg>`;
+}
+function shortArt(i){
+ const colors=["#e14b2b","#1687c8","#7a39ad","#16945b","#b68a13"];
+ return `<svg viewBox="0 0 300 500" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="500" fill="${colors[i%5]}"/>
+ <circle cx="220" cy="130" r="100" fill="#fff2"/><circle cx="80" cy="420" r="130" fill="#0002"/>
+ <text x="25" y="250" fill="white" font-size="30" font-family="Arial" font-weight="700">SHORTS</text></svg>`;
+}
+
+const navItems=document.querySelectorAll(".sideitem");
+const homePage=document.getElementById("homePage");
+const specialPage=document.getElementById("specialPage");
+const pageTitle=document.getElementById("pageTitle");
+const pageText=document.getElementById("pageText");
+const pageCards=document.getElementById("pageCards");
+
+function showPage(page){
+  navItems.forEach(x=>x.classList.toggle("activeSide",x.dataset.page===page));
+  if(page==="home"){
+    homePage.style.display="block"; specialPage.style.display="none"; return;
+  }
+  homePage.style.display="none"; specialPage.style.display="block";
+  const titles={
+    shortsPage:["Shorts","Короткие видео"],
+    subscriptions:["Подписки","Здесь будут каналы, на которые ты подписался."],
+    profile:["Вы","Твой профиль и история активности."],
+    history:["История","Видео, которые ты недавно смотрел."]
+  };
+  pageTitle.textContent=titles[page][0];
+  pageText.textContent=titles[page][1];
+  pageCards.innerHTML="";
+  if(page==="shortsPage"){
+    for(let i=0;i<5;i++){
+      const d=document.createElement("div");
+      d.className="short";
+      d.style.maxWidth="260px";
+      d.innerHTML=shortArt(i);
+      pageCards.appendChild(d);
+    }
+    pageCards.style.gridTemplateColumns="repeat(5,minmax(140px,1fr))";
+  } else if(page==="subscriptions"){
+    const subscribed=data.filter(v=>localStorage.getItem("sub_"+v[4])==="1");
+    pageCards.style.gridTemplateColumns="repeat(3,minmax(0,1fr))";
+    if(!subscribed.length){
+      pageCards.innerHTML='<p style="color:#aaa">Ты пока ни на кого не подписан.</p>';
+    } else {
+      renderCardsInto(pageCards,subscribed);
+    }
+  } else if(page==="history"){
+    const watched=JSON.parse(localStorage.getItem("history")||"[]");
+    const items=data.filter(v=>watched.includes(v[4]));
+    pageCards.style.gridTemplateColumns="repeat(3,minmax(0,1fr))";
+    if(!items.length) pageCards.innerHTML='<p style="color:#aaa">История пока пустая.</p>';
+    else renderCardsInto(pageCards,items);
+  } else {
+    pageCards.style.gridTemplateColumns="repeat(3,minmax(0,1fr))";
+    pageCards.innerHTML='<p style="color:#aaa">Профиль скоро будет здесь.</p>';
+  }
+}
+function renderCardsInto(root,list){
+  list.forEach((v,i)=>{
+    const d=document.createElement("article");
+    d.className="card";
+    d.innerHTML=`<div class="thumb">${art(i,v[0].split(" ")[0])}<span class="duration">${v[3]}</span></div>
+    <div class="info"><div class="avatar"></div><div class="details"><div class="title">${v[0]}</div><div class="meta">${v[1]} • ${v[2]}</div></div></div>`;
+    d.onclick=()=>watchVideo(v[4]);
+    root.appendChild(d);
+  });
+}
+navItems.forEach(item=>item.addEventListener("click",()=>showPage(item.dataset.page)));
+
+function render(list=data){
+ const root=document.getElementById("videos"); root.innerHTML="";
+ list.forEach((v,i)=>{
+   const liked=localStorage.getItem("like_"+v[4])==="1";
+   const likes=Number(localStorage.getItem("likes_"+v[4])||((i+1)*127));
+   const sub=localStorage.getItem("sub_"+v[4])==="1";
+   const card=document.createElement("article"); card.className="card";
+   card.innerHTML=`<div class="thumb">${art(i,v[0].split(" ")[0])}<span class="duration">${v[3]}</span></div>
+   <div class="info"><div class="avatar"></div><div class="details"><div class="title">${v[0]}</div><div class="meta">${v[1]} • ${v[2]}</div>
+   <div class="actions"><button class="like ${liked?"active":""}" data-id="${v[4]}">👍 <span>${likes}</span></button><button class="comment">💬</button></div></div>
+   <button class="subscribe ${sub?"subscribed":""}" data-id="${v[4]}">${sub?"Вы подписаны":"Подписаться"}</button></div>`;
+   root.appendChild(card);
+ });
+ root.querySelectorAll(".like").forEach(b=>b.onclick=()=>toggleLike(Number(b.dataset.id)));
+ root.querySelectorAll(".subscribe").forEach(b=>b.onclick=()=>toggleSub(Number(b.dataset.id)));
+ root.querySelectorAll(".card").forEach((card,index)=>{
+   card.addEventListener("click",(e)=>{
+     if(e.target.closest("button")) return;
+     watchVideo(list[index][4]);
+   });
+ });
+}
+function watchVideo(id){
+ let h=JSON.parse(localStorage.getItem("history")||"[]");
+ h=h.filter(x=>x!==id); h.unshift(id); h=h.slice(0,20);
+ localStorage.setItem("history",JSON.stringify(h));
+ const v=data.find(x=>x[4]===id);
+ showToast("Открыто: "+v[0]);
+}
+function toggleLike(id){
+ const key="like_"+id,countKey="likes_"+id;
+ const was=localStorage.getItem(key)==="1";
+ let count=Number(localStorage.getItem(countKey)||0);
+ if(was){localStorage.setItem(key,"0");count=Math.max(0,count-1);showToast("Лайк убран");}
+ else{localStorage.setItem(key,"1");count++;showToast("Лайк поставлен 👍");}
+ localStorage.setItem(countKey,String(count)); render(getCurrentList());
+}
+function toggleSub(id){
+ const key="sub_"+id,was=localStorage.getItem(key)==="1";
+ localStorage.setItem(key,was?"0":"1");
+ showToast(was?"Вы отписались":"Вы подписались ✅");
+ render(getCurrentList());
+ if(document.querySelector(".sideitem.activeSide")?.dataset.page==="subscriptions") showPage("subscriptions");
+}
+function getCurrentList(){
+ const q=document.getElementById("search").value.trim().toLowerCase();
+ return q?data.filter(v=>(v[0]+" "+v[1]).toLowerCase().includes(q)):data;
+}
+function search(){render(getCurrentList())}
+document.getElementById("searchBtn").onclick=search;
+document.getElementById("search").onkeydown=e=>{if(e.key==="Enter")search()};
+
+function showToast(t){const x=document.getElementById("toast");x.textContent=t;x.style.display="block";clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>x.style.display="none",1600)}
+function setTheme(t){document.body.classList.toggle("light",t==="light");localStorage.setItem("theme",t)}
+document.getElementById("settingsBtn").onclick=()=>document.getElementById("settings").classList.toggle("open");
+document.getElementById("darkBtn").onclick=()=>{setTheme("dark");showToast("Чёрная тема 🌙")};
+document.getElementById("lightBtn").onclick=()=>{setTheme("light");showToast("Светлая тема ☀️")};
+setTheme(localStorage.getItem("theme")||"dark");
+
+const shorts=document.getElementById("shorts");
+for(let i=0;i<5;i++){const d=document.createElement("div");d.className="short";d.innerHTML=shortArt(i);shorts.appendChild(d)}
+render();
+</script>
+</body>
+</html>
